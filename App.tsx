@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -7,6 +7,7 @@ import { AppLayout } from './components/AppLayout';
 
 // Lazy loading das páginas para melhor performance
 const LandingPage = lazy(() => import('./pages/LandingPage').then(module => ({ default: module.LandingPage })));
+const LandingPageNoNav = lazy(() => import('./pages/LandingPageNoNav').then(module => ({ default: module.LandingPageNoNav })));
 const AuthPage = lazy(() => import('./pages/AuthPage').then(module => ({ default: module.AuthPage })));
 const LoginPage = lazy(() => import('./pages/AuthPage').then(module => ({ default: module.LoginPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(module => ({ default: module.DashboardPage })));
@@ -40,6 +41,7 @@ const AppRoutes: React.FC = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/trafego" element={<LandingPageNoNav />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/login" element={!session ? <LoginPage /> : <Navigate to="/dashboard" replace />} />
         
@@ -63,9 +65,9 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <HashRouter>
+        <BrowserRouter>
           <AppRoutes />
-        </HashRouter>
+        </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>
   );
