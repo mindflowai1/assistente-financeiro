@@ -113,13 +113,13 @@ export const AppLayout: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-4">
-               <a href="https://seuassistentefinanceiro.com.br/" target="_blank" rel="noopener noreferrer">
+               <Link to="/dashboard">
                  <img 
                   src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20fav%20ico.png?alt=media&token=1df1410a-edad-41d8-8811-f156150788f8"
                   alt="Logo"
                   className="h-10 w-10"
                  />
-               </a>
+               </Link>
               <h1 className="text-xl font-bold text-green-600 hidden sm:block">{currentPageTitle}</h1>
             </div>
 

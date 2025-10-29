@@ -255,6 +255,47 @@ export const DashboardPage: React.FC = () => {
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const CACHE_KEY = user?.id ? `dashboard:lastQuery:${user.id}` : null;
+
+  const saveCache = (payload: {
+    startDate: string;
+    endDate: string;
+    selectedCategory: string;
+    records: TransactionRecord[];
+    dailyBalances: DailyBalance[];
+    totalIncome: number;
+    totalOutcome: number;
+    balance: number;
+  }) => {
+    try {
+      if (!CACHE_KEY) return;
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ...payload, savedAt: Date.now() }));
+    } catch {}
+  };
+
+  const loadCache = (): null | {
+    startDate: string;
+    endDate: string;
+    selectedCategory: string;
+    records: TransactionRecord[];
+    dailyBalances: DailyBalance[];
+    totalIncome: number;
+    totalOutcome: number;
+    balance: number;
+  } => {
+    try {
+      if (!CACHE_KEY) return null;
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.records)) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
 
   // FIX: Explicitly cast `r.valor` to a number to prevent potential type issues
   // where it might be treated as a string, leading to concatenation instead of addition.
@@ -272,6 +313,19 @@ export const DashboardPage: React.FC = () => {
     setTotalIncome(income);
     setTotalOutcome(outcome);
     setBalance(income - outcome);
+    // Atualizar cache quando registros mudarem significativamente
+    if (records && records.length > 0) {
+      saveCache({
+        startDate,
+        endDate,
+        selectedCategory,
+        records,
+        dailyBalances,
+        totalIncome: income,
+        totalOutcome: outcome,
+        balance: income - outcome,
+      });
+    }
   }, [records]);
 
   const spendingData = useMemo(() => {
@@ -306,10 +360,11 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedRecords.length === records.length) {
+    const source = filteredRecords;
+    if (selectedRecords.length === source.length) {
       setSelectedRecords([]);
     } else {
-      setSelectedRecords(records.map(r => r.id));
+      setSelectedRecords(source.map(r => r.id));
     }
   };
 
@@ -329,6 +384,20 @@ export const DashboardPage: React.FC = () => {
         throw new Error(errorData.message || 'Falha ao excluir as transações. Tente novamente.');
       }
       setRecords(prevRecords => prevRecords.filter(record => !selectedRecords.includes(record.id)));
+      // Sincronizar cache após exclusão
+      const updated = records.filter(r => !selectedRecords.includes(r.id));
+      const income = updated.filter(r => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
+      const outcome = updated.filter(r => r.tipo === 'Saída').reduce((s, r) => s + r.valor, 0);
+      saveCache({
+        startDate,
+        endDate,
+        selectedCategory,
+        records: updated,
+        dailyBalances,
+        totalIncome: income,
+        totalOutcome: outcome,
+        balance: income - outcome,
+      });
       setIsSelectionMode(false);
       setSelectedRecords([]);
     } catch (e: any) {
@@ -384,6 +453,19 @@ export const DashboardPage: React.FC = () => {
         const sanitizedTransactions = transactions.map(tx => ({ ...tx, valor: Number(tx.valor) || 0 }));
         sanitizedTransactions.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
         setRecords(sanitizedTransactions);
+        // Salvar no cache junto com filtros e saldos (balances pode vir em seguida)
+        const income = sanitizedTransactions.filter((r: any) => r.tipo === 'Entrada').reduce((s: number, r: any) => s + r.valor, 0);
+        const outcome = sanitizedTransactions.filter((r: any) => r.tipo === 'Saída').reduce((s: number, r: any) => s + r.valor, 0);
+        saveCache({
+          startDate,
+          endDate,
+          selectedCategory,
+          records: sanitizedTransactions,
+          dailyBalances: Array.isArray(balances) ? balances : [],
+          totalIncome: income,
+          totalOutcome: outcome,
+          balance: income - outcome,
+        });
         setMessage(transactions.length === 0 && (!balances || balances.length === 0) ? 'Nenhum registro encontrado para o período selecionado.' : null);
       } else { setRecords([]); }
       
@@ -393,6 +475,17 @@ export const DashboardPage: React.FC = () => {
             .map(b => ({ ...b, saldo: Number(b.saldo) }))
             .filter(b => b && typeof b.saldo === 'number' && !isNaN(b.saldo));
         setDailyBalances(sanitizedBalances);
+        // Atualizar cache com saldos saneados
+        saveCache({
+          startDate,
+          endDate,
+          selectedCategory,
+          records,
+          dailyBalances: sanitizedBalances,
+          totalIncome,
+          totalOutcome,
+          balance,
+        });
       } else {
         setDailyBalances([]);
       }
@@ -406,6 +499,23 @@ export const DashboardPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Carregar resultados anteriores do cache quando o usuário voltar para o Dashboard
+  useEffect(() => {
+    if (!user?.id) return;
+    // Se já temos registros carregados, não sobrescrever
+    if (records && records.length > 0) return;
+    const cached = loadCache();
+    if (!cached) return;
+    setStartDate(cached.startDate || '');
+    setEndDate(cached.endDate || '');
+    setSelectedCategory(cached.selectedCategory || '');
+    setRecords(cached.records || []);
+    setDailyBalances(cached.dailyBalances || []);
+    setTotalIncome(cached.totalIncome || 0);
+    setTotalOutcome(cached.totalOutcome || 0);
+    setBalance(cached.balance || 0);
+  }, [user?.id]);
   
   const cardClass = theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
   const textMutedClass = theme === 'dark' ? 'text-gray-400' : 'text-gray-600';
@@ -421,6 +531,21 @@ export const DashboardPage: React.FC = () => {
   const transactionItemSubtextClass = theme === 'dark' ? 'text-gray-400' : 'text-gray-500';
   const selectionBarClass = theme === 'dark' ? 'bg-gray-700/50 hover:bg-gray-600' : 'bg-gray-100/50 hover:bg-gray-200';
   const selectedItemClass = theme === 'dark' ? 'border-green-500 bg-green-500/10' : 'border-green-500 bg-green-500/10';
+  
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredRecords = useMemo(() => {
+    if (!normalizedQuery) return records;
+    return records.filter((r) => {
+      const parts: string[] = [
+        r.descricao || '',
+        r.categoria || '',
+        r.tipo || '',
+        formatDate(r.data, { day: '2-digit', month: '2-digit', year: 'numeric' }) || '',
+        String(r.valor) || ''
+      ].map((s) => s.toLowerCase());
+      return parts.some((p) => p.includes(normalizedQuery));
+    });
+  }, [records, normalizedQuery]);
 
   return (
     <div className={`w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 rounded-2xl shadow-lg border transition-colors duration-300 ${cardClass}`}>
@@ -521,16 +646,34 @@ export const DashboardPage: React.FC = () => {
                               </div>
                           )}
                       </div>
+                      <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                        <div>
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar por descrição, categoria, tipo, data ou valor"
+                            className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 transition ${inputClass}`}
+                            aria-label="Buscar transações"
+                          />
+                        </div>
+                        <div className="text-sm text-right">
+                          <span className={summaryTextClass}>{filteredRecords.length} de {records.length} transações</span>
+                        </div>
+                      </div>
                       {isSelectionMode && (
                           <div onClick={handleSelectAll} className={`flex items-center p-4 mb-4 rounded-lg cursor-pointer transition-colors ${selectionBarClass}`}>
-                              <div className={`h-5 w-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all ${selectedRecords.length === records.length && records.length > 0 ? 'bg-green-600 border-green-500' : `${theme === 'dark' ? 'bg-gray-600 border-gray-400' : 'bg-gray-200 border-gray-400'}`}`} aria-hidden="true">
-                                {selectedRecords.length === records.length && records.length > 0 && <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                              <div className={`h-5 w-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all ${selectedRecords.length === filteredRecords.length && filteredRecords.length > 0 ? 'bg-green-600 border-green-500' : `${theme === 'dark' ? 'bg-gray-600 border-gray-400' : 'bg-gray-200 border-gray-400'}`}`} aria-hidden="true">
+                                {selectedRecords.length === filteredRecords.length && filteredRecords.length > 0 && <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                               </div>
                               <span className={`ml-3 font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Selecionar Todas</span>
                           </div>
                       )}
                       <div className="space-y-4">
-                          {records.map((record) => (
+                          {filteredRecords.length === 0 && (
+                            <p className={textMutedClass}>Nenhuma transação encontrada{searchQuery ? ` para "${searchQuery}"` : ''}.</p>
+                          )}
+                          {filteredRecords.map((record) => (
                               <div key={record.id} onClick={() => isSelectionMode && handleSelectRecord(record.id)} className={`flex items-center justify-between p-4 rounded-lg transition-all border-2 ${isSelectionMode ? 'cursor-pointer' : ''} ${transactionItemClass} ${selectedRecords.includes(record.id) ? selectedItemClass : 'border-transparent'}`}>
                                   <div className="flex items-center gap-4">
                                       {isSelectionMode && (
