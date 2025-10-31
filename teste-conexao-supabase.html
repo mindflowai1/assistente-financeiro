@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-box {
+            background: #2a2a2a;
+            border: 2px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: #1a1a1a;
+            border: 1px solid #4a4a4a;
+            color: white;
+            border-radius: 5px;
+        }
+        h1 {
+            color: #10b981;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>🔍 Teste de Conexão Supabase</h1>
+    
+    <div class="test-box">
+        <h3>1. Configurar Credenciais</h3>
+        <p>Cole suas credenciais do Supabase (Settings → API):</p>
+        <input type="text" id="supabaseUrl" placeholder="Project URL: https://xxxxx.supabase.co">
+        <input type="text" id="supabaseKey" placeholder="anon public key: eyJhbGciOiJI...">
+        <button onclick="salvarCredenciais()">Salvar Credenciais</button>
+    </div>
+
+    <div class="test-box">
+        <h3>2. Testar Conexão Básica</h3>
+        <button onclick="testarConexao()">Testar Conexão</button>
+        <div id="resultConexao" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h3>3. Testar Login</h3>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="senha" placeholder="Senha">
+        <button onclick="testarLogin()">Fazer Login</button>
+        <div id="resultLogin" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h3>4. Testar Função RPC</h3>
+        <p>Este teste só funciona se você já estiver logado</p>
+        <input type="password" id="senhaAtual" placeholder="Senha Atual">
+        <input type="password" id="senhaNova" placeholder="Nova Senha">
+        <button onclick="testarRPC()">Testar change_user_password</button>
+        <div id="resultRPC" class="result"></div>
+    </div>
+
+    <script>
+        let supabase = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
+            element.innerHTML += `<span class="${color}">[${timestamp}] ${message}</span>\n`;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        function salvarCredenciais() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+
+            if (!url || !key) {
+                alert('Por favor, preencha a URL e a chave!');
+                return;
+            }
+
+            // Verificar se a biblioteca Supabase foi carregada
+            if (!window.supabase) {
+                alert('❌ Biblioteca Supabase não foi carregada! Verifique sua conexão com a internet.');
+                console.error('window.supabase está undefined. CDN não carregou.');
+                return;
+            }
+
+            try {
+                // Usar window.supabase porque a lib vem do CDN
+                supabase = window.supabase.createClient(url, key);
+                console.log('✅ Cliente Supabase criado com sucesso');
+                alert('✅ Credenciais salvas! Agora você pode testar a conexão.');
+            } catch (error) {
+                console.error('❌ Erro ao criar cliente:', error);
+                alert('❌ Erro ao criar cliente: ' + error.message);
+            }
+        }
+
+        async function testarConexao() {
+            clearLog('resultConexao');
+
+            if (!supabase) {
+                log('resultConexao', '❌ Configure as credenciais primeiro!', 'error');
+                return;
+            }
+
+            log('resultConexao', '🔄 Testando conexão...', 'info');
+
+            try {
+                // Teste 1: Buscar sessão
+                log('resultConexao', '1️⃣ Buscando sessão...', 'info');
+                const start1 = performance.now();
+                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                const duration1 = performance.now() - start1;
+
+                if (sessionError) {
+                    log('resultConexao', `❌ Erro: ${sessionError.message}`, 'error');
+                } else {
+                    log('resultConexao', `✅ Sessão obtida em ${duration1.toFixed(2)}ms`, 'success');
+                    log('resultConexao', `   Logado: ${sessionData.session ? 'SIM' : 'NÃO'}`, 'info');
+                }
+
+                // Teste 2: RPC genérico (vai dar erro mas testa conectividade)
+                log('resultConexao', '\n2️⃣ Testando chamada RPC...', 'info');
+                const start2 = performance.now();
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+                );
+                
+                try {
+                    const rpcPromise = supabase.rpc('ping');
+                    await Promise.race([rpcPromise, timeoutPromise]);
+                    const duration2 = performance.now() - start2;
+                    log('resultConexao', `✅ RPC respondeu em ${duration2.toFixed(2)}ms`, 'success');
+                } catch (err) {
+                    const duration2 = performance.now() - start2;
+                    if (err.message === 'TIMEOUT') {
+                        log('resultConexao', `❌❌❌ TIMEOUT após ${duration2.toFixed(2)}ms!`, 'error');
+                        log('resultConexao', '⚠️ Supabase NÃO está respondendo chamadas RPC!', 'error');
+                    } else {
+                        log('resultConexao', `⚠️ Erro (normal se função não existe): ${err.message}`, 'warning');
+                        log('resultConexao', `✅ Mas RPC está funcionando! (${duration2.toFixed(2)}ms)`, 'success');
+                    }
+                }
+
+                log('resultConexao', '\n✅ Teste de conexão concluído!', 'success');
+
+            } catch (error) {
+                log('resultConexao', `❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarLogin() {
+            clearLog('resultLogin');
+
+            if (!supabase) {
+                log('resultLogin', '❌ Configure as credenciais primeiro!', 'error');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            if (!email || !senha) {
+                log('resultLogin', '❌ Preencha email e senha!', 'error');
+                return;
+            }
+
+            log('resultLogin', '🔄 Tentando fazer login...', 'info');
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: senha
+                });
+
+                if (error) {
+                    log('resultLogin', `❌ Erro: ${error.message}`, 'error');
+                } else {
+                    log('resultLogin', '✅ Login bem-sucedido!', 'success');
+                    log('resultLogin', `   User ID: ${data.user.id}`, 'info');
+                    log('resultLogin', `   Email: ${data.user.email}`, 'info');
+                }
+            } catch (error) {
+                log('resultLogin', `❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarRPC() {
+            clearLog('resultRPC');
+
+            if (!supabase) {
+                log('resultRPC', '❌ Configure as credenciais primeiro!', 'error');
+                return;
+            }
+
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const senhaNova = document.getElementById('senhaNova').value;
+
+            if (!senhaAtual || !senhaNova) {
+                log('resultRPC', '❌ Preencha ambas as senhas!', 'error');
+                return;
+            }
+
+            log('resultRPC', '🔄 Testando função change_user_password...', 'info');
+
+            const start = performance.now();
+            
+            try {
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+                );
+                
+                const rpcPromise = supabase.rpc('change_user_password', {
+                    current_password: senhaAtual,
+                    new_password: senhaNova
+                });
+
+                const result = await Promise.race([rpcPromise, timeoutPromise]);
+                const duration = performance.now() - start;
+
+                log('resultRPC', `✅ Função respondeu em ${duration.toFixed(2)}ms`, 'success');
+                log('resultRPC', `   Data: ${JSON.stringify(result.data, null, 2)}`, 'info');
+                
+                if (result.error) {
+                    log('resultRPC', `⚠️ Error: ${result.error.message}`, 'warning');
+                }
+
+            } catch (error) {
+                const duration = performance.now() - start;
+                
+                if (error.message === 'TIMEOUT') {
+                    log('resultRPC', `❌❌❌ TIMEOUT após ${duration.toFixed(2)}ms!`, 'error');
+                    log('resultRPC', '⚠️ A função NÃO está respondendo!', 'error');
+                } else {
+                    log('resultRPC', `❌ Erro: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Tentar usar credenciais automaticamente ao carregar
+        window.onload = () => {
+            console.log('🔄 Carregando página de teste...');
+            console.log('📦 Biblioteca Supabase carregada:', !!window.supabase);
+            
+            // Preencher credenciais automaticamente
+            document.getElementById('supabaseUrl').value = 'https://wgtntctzljufpikogvur.supabase.co';
+            document.getElementById('supabaseKey').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndG50Y3R6bGp1ZnBpa29ndnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NTE5MzcsImV4cCI6MjA3NTUyNzkzN30.ZuxOpQCtxBaMhXN4RrtmlSr304ENqPoF1yWumxECTPg';
+            
+            // Salvar automaticamente
+            setTimeout(() => {
+                salvarCredenciais();
+            }, 100);
+        };
+    </script>
+</body>
+</html>
+

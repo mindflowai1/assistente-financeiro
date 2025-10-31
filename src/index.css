@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Animações customizadas para menu mobile */
+@keyframes menuSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes menuSlideOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+}
+
+@keyframes menuItemFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes menuItemFadeOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+}
+
+.animate-menu-in {
+    animation: menuSlideIn 0.2s ease-out forwards;
+}
+
+.animate-menu-item {
+    animation: menuItemFadeIn 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-menu-out {
+    animation: menuSlideOut 0.15s ease-in forwards;
+}
+
+.animate-menu-item-out {
+    animation: menuItemFadeOut 0.2s ease-in forwards;
+}
+
+.menu-item-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-item-hover:hover {
+    transform: translateX(4px);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.btn-menu-pulse:active {
+    animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes mobileMenuSlideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes mobileMenuSlideUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.animate-mobile-menu-in {
+    animation: mobileMenuSlideDown 0.3s ease-out forwards;
+}
+
+.animate-mobile-menu-out {
+    animation: mobileMenuSlideUp 0.2s ease-in forwards;
+}
+

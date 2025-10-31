@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <meta name="description" content="Gerencie suas finanças de forma inteligente direto do WhatsApp com IA" />
+    <title>Seu Assistente Financeiro</title>
+    <link rel="icon" type="image/png" href="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20fav%20ico.png?alt=media&token=1df1410a-edad-41d8-8811-f156150788f8" />
+    
+    <!-- Preconnect para recursos externos críticos -->
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.clarity.ms">
+    <link rel="dns-prefetch" href="https://connect.facebook.net">
+    <link rel="dns-prefetch" href="https://analytics.tiktok.com">
+    
+    <!-- Link DNS preconnect para logo (sem preload que bloqueia) -->
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
+
+    <!-- Facebook Domain Verification -->
+    <meta name="facebook-domain-verification" content="wihtcqqv6lyk8p0wp2qgdp6x60fwe9" />
+
+    <!-- Analytics Scripts - REMOVIDOS DO <head> para não bloquear renderização -->
+    <!-- Serão adicionados no final do <body> -->
+    
+    <!-- CSS inline crítico para loading inicial -->
+    <style>
+        body { 
+            margin: 0; 
+            background: #111827; 
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        #root { min-height: 100vh; }
+        .initial-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111827;
+            z-index: 9999;
+        }
+        .loader-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #1f2937;
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    
+    
+    <!-- Loading inicial inline para FCP rápido -->
+    <div id="root">
+        <div class="initial-loader">
+            <div class="loader-spinner"></div>
+        </div>
+    </div>
+    
+    <script type="module" src="/index.tsx"></script>
+    
+</body>
+</html>

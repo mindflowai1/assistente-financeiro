@@ -1,0 +1,5 @@
+{
+  "name": "Dashboard - Seu Assistente Financeiro",
+  "description": "A React application demonstrating user authentication with Supabase, including sign-up, login, and protected routes.",
+  "requestFramePermissions": []
+}
