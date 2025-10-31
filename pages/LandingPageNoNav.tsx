@@ -108,89 +108,7 @@ export const LandingPageNoNav: React.FC = () => {
   }, [activeFeatureIndex, shouldLoadGifs, gifsLoaded]);
 
   // Trackers: load only on this page and clean up on unmount
-  useEffect(() => {
-    // Microsoft Clarity
-    const ensureClarity = () => {
-      if ((window as any).clarity) return;
-      (function(c: any, l: Document, a: any, r: any, i: string, t?: HTMLScriptElement, y?: Element) {
-        c[a] = c[a] || function() { (c[a].q = c[a].q || []).push(arguments); };
-        t = l.createElement(r) as HTMLScriptElement; t.async = true; t.src = "https://www.clarity.ms/tag/" + i;
-        y = l.getElementsByTagName(r)[0]; (y!.parentNode as Node).insertBefore(t, y!);
-      })(window as any, document, "clarity", "script", "tvtr3pe7ua");
-    };
-    // Meta/Facebook Pixel (2 IDs)
-    const ensureFacebookPixel = () => {
-      if ((window as any).fbq) {
-        try {
-          (window as any).fbq('init', '1513614419906000');
-          (window as any).fbq('init', '1621531598314509');
-          (window as any).fbq('track', 'PageView');
-        } catch {}
-        return;
-      }
-      (function(f: any, b: Document, e: string, v: string, n?: any, t?: HTMLScriptElement, s?: Element){
-        if (f.fbq) return; n = f.fbq = function(){ n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-        if (!f._fbq) f._fbq = n; n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
-        t = b.createElement(e) as HTMLScriptElement; t.async = true; t.src = v; s = b.getElementsByTagName(e)[0]; (s!.parentNode as Node).insertBefore(t, s!);
-      })((window as any), document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-      try {
-        (window as any).fbq('init', '1513614419906000');
-        (window as any).fbq('init', '1621531598314509');
-        (window as any).fbq('track', 'PageView');
-      } catch {}
-    };
-
-    // TikTok Pixel
-    const ensureTikTok = () => {
-      if ((window as any).ttq) {
-        try { (window as any).ttq.page(); } catch {}
-        return;
-      }
-      (function (w: any, d: Document, t: string) {
-        w.TiktokAnalyticsObject = t;
-        const ttq = w[t] = w[t] || [];
-        ttq.methods = ["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
-        ttq.setAndDefer = function(obj: any, method: string) { obj[method] = function() { obj.push([method].concat(Array.prototype.slice.call(arguments, 0))); }; };
-        for (let i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
-        ttq.instance = function(id: string) { const e = ttq._i[id] || []; for (let n = 0; n < ttq.methods.length; n++) ttq.setAndDefer(e, ttq.methods[n]); return e; };
-        ttq.load = function(id: string, opts?: any) {
-          const r = "https://analytics.tiktok.com/i18n/pixel/events.js";
-          ttq._i = ttq._i || {}; ttq._i[id] = []; ttq._i[id]._u = r;
-          ttq._t = ttq._t || {}; ttq._t[id] = +new Date;
-          ttq._o = ttq._o || {}; ttq._o[id] = opts || {};
-          const n = d.createElement("script"); n.type = "text/javascript"; n.async = true; n.src = r + "?sdkid=" + id + "&lib=" + t;
-          const s = d.getElementsByTagName("script")[0]; (s!.parentNode as Node).insertBefore(n, s!);
-        };
-      })((window as any), document, 'ttq');
-      try {
-        (window as any).ttq.load('D401QTJC77UACP40867G');
-        (window as any).ttq.page();
-      } catch {}
-    };
-
-    // Defer until after load to avoid blocking
-    const onLoad = () => {
-      ensureClarity();
-      ensureFacebookPixel();
-      ensureTikTok();
-    };
-    if (document.readyState === 'complete') onLoad();
-    else window.addEventListener('load', onLoad);
-
-    // Cleanup: remove scripts and globals to avoid cross-page leakage
-    return () => {
-      window.removeEventListener('load', onLoad);
-      const removeBySrcPart = (part: string) => {
-        document.querySelectorAll(`script[src*="${part}"]`).forEach((el) => el.parentNode?.removeChild(el));
-      };
-      removeBySrcPart('clarity.ms/tag/tvtr3pe7ua');
-      removeBySrcPart('connect.facebook.net/en_US/fbevents.js');
-      removeBySrcPart('analytics.tiktok.com/i18n/pixel/events.js');
-      try { delete (window as any).clarity; } catch {}
-      try { delete (window as any).fbq; delete (window as any)._fbq; } catch {}
-      try { delete (window as any).ttq; } catch {}
-    };
-  }, []);
+  useEffect(() => {}, []);
 
   const handleNextFeature = () => {
     setActiveFeatureIndex((prevIndex) => (prevIndex + 1) % features.length);
@@ -235,11 +153,16 @@ export const LandingPageNoNav: React.FC = () => {
     }
     setSubmittingPre(true);
     try {
-      await fetch('/api/checkout-start', {
+      const t0 = performance.now();
+      const resp = await fetch('/api/checkout-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: preEmail, name: preName, phone: prePhone, source: 'landing-trafego', plan: 'plano-completo' })
       });
+      const elapsed = Math.round(performance.now() - t0);
+      let data: any = null;
+      try { data = await resp.json(); } catch {}
+      console.log('checkout-start result', { status: resp.status, ok: resp.ok, elapsedMs: elapsed, data });
     } catch (err) {
       // no-op
     } finally {
@@ -258,7 +181,7 @@ export const LandingPageNoNav: React.FC = () => {
             <div className="absolute inset-0 bg-black/60" onClick={() => setShowPreCheckout(false)}></div>
             <div className="relative w-full max-w-md mx-auto bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-1 text-center">Comece sua inscrição aqui</h3>
-              <p className="text-sm text-gray-400 mb-6 text-center">Preencha seus dados para avançar para o checkout.</p>
+              <p className="text-sm text-gray-400 mb-6 text-center">Preencha seus dados para avançar</p>
               <form onSubmit={submitPreCheckout} className="space-y-4">
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">Nome</label>
@@ -280,7 +203,7 @@ export const LandingPageNoNav: React.FC = () => {
                           className="flex-1 py-2.5 rounded-lg border border-gray-600 text-gray-200 hover:bg-gray-700 transition-colors">Cancelar</button>
                   <button type="submit" disabled={submittingPre}
                           className="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-60">
-                    {submittingPre ? 'Enviando...' : 'Continuar para o checkout'}
+                    {submittingPre ? 'Enviando...' : 'Continuar'}
                   </button>
                 </div>
               </form>

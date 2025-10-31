@@ -62,7 +62,6 @@ const features = [
   }
 ];
 
-
 export const LandingPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -70,39 +69,48 @@ export const LandingPage: React.FC = () => {
   const [gifsLoaded, setGifsLoaded] = useState<Set<number>>(new Set());
   const [shouldLoadGifs, setShouldLoadGifs] = useState(false);
   const featureSectionRef = React.useRef<HTMLElement>(null);
+  const [showPreCheckout, setShowPreCheckout] = useState(false);
+  const [preName, setPreName] = useState("");
+  const [preEmail, setPreEmail] = useState("");
+  const [prePhone, setPrePhone] = useState("");
+  const [submittingPre, setSubmittingPre] = useState(false);
 
-  // Carregar GIFs APENAS quando o usuário rolar até a seção de funcionalidades
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setShouldLoadGifs(true);
-            // Pré-carregar apenas o GIF ativo
-            const img = new Image();
-            img.src = features[activeFeatureIndex].mockupImage;
-            setGifsLoaded(new Set([activeFeatureIndex]));
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '200px' } // Trigger 200px antes de entrar na viewport
-    );
-
-    if (featureSectionRef.current) {
-      observer.observe(featureSectionRef.current);
+  const checkoutUrl = "https://payfast.greenn.com.br/140026";
+  const handleOpenPreCheckout = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setShowPreCheckout(true);
+  };
+  const submitPreCheckout = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const normalizePhone = (v: string) => v.replace(/\D+/g, '');
+    const params = new URLSearchParams({
+      'name-field': preName || '',
+      'email-field': preEmail || '',
+      'cellphone-field': normalizePhone(prePhone || ''),
+    });
+    const dest = `${checkoutUrl}?${params.toString()}`;
+    if (!preEmail || !prePhone) {
+      window.location.href = dest;
+      return;
     }
-
-    return () => observer.disconnect();
-  }, [activeFeatureIndex]);
-
-  // Carregar novo GIF quando trocar o activeFeatureIndex
-  useEffect(() => {
-    if (shouldLoadGifs && !gifsLoaded.has(activeFeatureIndex)) {
-      const img = new Image();
-      img.src = features[activeFeatureIndex].mockupImage;
-      setGifsLoaded(prev => new Set([...prev, activeFeatureIndex]));
+    setSubmittingPre(true);
+    try {
+      const t0 = performance.now();
+      const resp = await fetch('/api/checkout-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: preEmail, name: preName, phone: prePhone, source: 'landing', plan: 'plano-completo' })
+      });
+      const elapsed = Math.round(performance.now() - t0);
+      let data: any = null;
+      try { data = await resp.json(); } catch {}
+      console.log('checkout-start result', { status: resp.status, ok: resp.ok, elapsedMs: elapsed, data });
+    } catch (err) {
+      // no-op
+    } finally {
+      window.location.href = dest;
     }
-  }, [activeFeatureIndex, shouldLoadGifs, gifsLoaded]);
+  };
 
   const handleCloseMenu = () => {
     setIsClosing(true);
@@ -127,15 +135,45 @@ export const LandingPage: React.FC = () => {
       handleCloseMenu(); // Close mobile menu with animation
     }
   };
-  
+
   const handleNextFeature = () => {
     setActiveFeatureIndex((prevIndex) => (prevIndex + 1) % features.length);
   };
-  
+
   const handlePrevFeature = () => {
     setActiveFeatureIndex((prevIndex) => (prevIndex - 1 + features.length) % features.length);
   };
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldLoadGifs(true);
+            // Pré-carregar apenas o GIF ativo
+            const img = new Image();
+            img.src = features[activeFeatureIndex].mockupImage;
+            setGifsLoaded(new Set([activeFeatureIndex]));
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '200px' } // Trigger 200px antes de entrar na viewport
+    );
+
+    if (featureSectionRef.current) {
+      observer.observe(featureSectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [activeFeatureIndex]);
+
+  useEffect(() => {
+    if (shouldLoadGifs && !gifsLoaded.has(activeFeatureIndex)) {
+      const img = new Image();
+      img.src = features[activeFeatureIndex].mockupImage;
+      setGifsLoaded(prev => new Set([...prev, activeFeatureIndex]));
+    }
+  }, [activeFeatureIndex, shouldLoadGifs, gifsLoaded]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200 transition-colors duration-300">
@@ -149,14 +187,14 @@ export const LandingPage: React.FC = () => {
                   alt="Seu Assistente Financeiro" 
                   className="h-36 md:h-40 w-auto"
                   loading="eager"
-                  fetchpriority="high"
+                  fetchPriority="high"
                   decoding="async"
                   width="200"
                   height="200"
                 />
               </Link>
             </div>
-            
+
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
                 <nav className="flex space-x-8">
@@ -168,7 +206,7 @@ export const LandingPage: React.FC = () => {
                   <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')} className="font-medium text-gray-400 hover:text-green-500 transition-colors duration-200">Dúvidas</a>
                 </nav>
                 <div className="flex items-center gap-4">
-                  <Link 
+                  <Link
                       to="/login"
                       className="py-2 px-5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out"
                   >
@@ -179,11 +217,11 @@ export const LandingPage: React.FC = () => {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
-              <button 
-                onClick={() => isMenuOpen ? handleCloseMenu() : setIsMenuOpen(true)} 
-                type="button" 
-                className="ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 btn-menu-pulse transition-all duration-200" 
-                aria-controls="mobile-menu" 
+              <button
+                onClick={() => isMenuOpen ? handleCloseMenu() : setIsMenuOpen(true)}
+                type="button"
+                className="ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 btn-menu-pulse transition-all duration-200"
+                aria-controls="mobile-menu"
                 aria-expanded={isMenuOpen}
               >
                 <span className="sr-only">Abrir menu principal</span>
@@ -203,54 +241,54 @@ export const LandingPage: React.FC = () => {
 
         {/* Mobile menu, show/hide based on menu state. */}
         {isMenuOpen && (
-          <div 
-            className={`md:hidden bg-gray-900/95 ${isClosing ? 'animate-mobile-menu-out' : 'animate-mobile-menu-in'}`} 
+          <div
+            className={`md:hidden bg-gray-900/95 ${isClosing ? 'animate-mobile-menu-out' : 'animate-mobile-menu-in'}`}
             id="mobile-menu"
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <a 
-                href="#inicio" 
-                onClick={(e) => handleNavClick(e, 'inicio')} 
+              <a
+                href="#inicio"
+                onClick={(e) => handleNavClick(e, 'inicio')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.05s' }}
               >
                 Início
               </a>
-              <a 
-                href="#funcionalidades" 
-                onClick={(e) => handleNavClick(e, 'funcionalidades')} 
+              <a
+                href="#funcionalidades"
+                onClick={(e) => handleNavClick(e, 'funcionalidades')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.1s' }}
               >
                 Funcionalidades
               </a>
-              <a 
-                href="#recursos" 
-                onClick={(e) => handleNavClick(e, 'recursos')} 
+              <a
+                href="#recursos"
+                onClick={(e) => handleNavClick(e, 'recursos')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.15s' }}
               >
                 Recursos
               </a>
-              <a 
-                href="#como-usar" 
-                onClick={(e) => handleNavClick(e, 'como-usar')} 
+              <a
+                href="#como-usar"
+                onClick={(e) => handleNavClick(e, 'como-usar')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.2s' }}
               >
                 Como Usar
               </a>
-              <a 
-                href="#planos" 
-                onClick={(e) => handleNavClick(e, 'planos')} 
+              <a
+                href="#planos"
+                onClick={(e) => handleNavClick(e, 'planos')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.25s' }}
               >
                 Planos
               </a>
-              <a 
-                href="#faq" 
-                onClick={(e) => handleNavClick(e, 'faq')} 
+              <a
+                href="#faq"
+                onClick={(e) => handleNavClick(e, 'faq')}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 hover:translate-x-1"
                 style={{ animationDelay: '0.3s' }}
               >
@@ -259,7 +297,7 @@ export const LandingPage: React.FC = () => {
             </div>
             <div className="pt-4 pb-3 border-t border-gray-700">
                 <div className="px-5">
-                    <Link 
+                    <Link
                         to="/login"
                         onClick={handleCloseMenu}
                         className="block text-center w-full py-2 px-5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out hover:scale-105"
@@ -273,6 +311,41 @@ export const LandingPage: React.FC = () => {
       </header>
 
       <main className="relative z-0">
+        {showPreCheckout && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowPreCheckout(false)}></div>
+            <div className="relative w-full max-w-md mx-auto bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
+              <h3 className="text-xl font-bold text-white mb-1 text-center">Comece sua inscrição aqui</h3>
+              <p className="text-sm text-gray-400 mb-6 text-center">Preencha seus dados para avançar</p>
+              <form onSubmit={submitPreCheckout} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">Nome</label>
+                  <input value={preName} onChange={(e) => setPreName(e.target.value)}
+                         type="text" className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Seu nome" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">E-mail</label>
+                  <input value={preEmail} onChange={(e) => setPreEmail(e.target.value)}
+                         type="email" required className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="voce@email.com" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">WhatsApp</label>
+                  <input value={prePhone} onChange={(e) => setPrePhone(e.target.value)}
+                         type="tel" required className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="(11) 99999-9999" />
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <button type="button" onClick={() => setShowPreCheckout(false)}
+                          className="flex-1 py-2.5 rounded-lg border border-gray-600 text-gray-200 hover:bg-gray-700 transition-colors">Cancelar</button>
+                  <button type="submit" disabled={submittingPre}
+                          className="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-60">
+                    {submittingPre ? 'Enviando...' : 'Continuar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         <section id="inicio" className="pt-32 md:pt-48 pb-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -290,7 +363,7 @@ export const LandingPage: React.FC = () => {
                 >
                     Comece agora
                 </a>
-                
+
                 {/* Mobile Mockup - Visible on small screens */}
                 <div className="block md:hidden mt-12">
                     <div className="relative mx-auto border-gray-700 bg-gray-800 border-[8px] rounded-[2.5rem] h-[450px] w-[225px] shadow-xl">
@@ -330,12 +403,12 @@ export const LandingPage: React.FC = () => {
                                     <div className="flex justify-end">
                                         <div className="bg-green-600 rounded-l-lg rounded-br-lg p-1.5 max-w-[80%] w-36">
                                             <div className="flex items-center gap-1.5">
-                                                <svg className="w-4 h-4 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+                                                <svg className="w-4 h-4 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
                                                 <div className="flex-grow h-0.5 bg-green-400/50 rounded-full flex items-center">
                                                     <div className="w-2/3 h-0.5 bg-white rounded-full"></div>
-                                                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                                    <div className="w-2 h-2 bg-white rounded-full"></div>
                                                 </div>
-                                                <span className="text-[10px] font-mono text-white">0:05</span>
+                                                <span className="text-xs font-mono text-white">0:05</span>
                                             </div>
                                         </div>
                                     </div>
@@ -375,9 +448,9 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-gray-800/80 p-1.5 flex items-center gap-1.5 flex-shrink-0">
-                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
                                 <div className="flex-grow h-6 bg-gray-700 rounded-full text-xs text-gray-500 px-2 flex items-center">Digite...</div>
-                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                             </div>
                         </div>
                     </div>
@@ -403,7 +476,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 bg-gray-800 rounded-full p-2">
-                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg text-gray-200">Personalizado</h3>
@@ -412,7 +485,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 bg-gray-800 rounded-full p-2">
-                           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg text-gray-200">Painéis Visuais</h3>
@@ -465,7 +538,7 @@ export const LandingPage: React.FC = () => {
                                 <div className="flex justify-end">
                                     <div className="bg-green-600 rounded-l-lg rounded-br-lg p-2 max-w-[80%] w-48">
                                         <div className="flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+                                            <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
                                             <div className="flex-grow h-1 bg-green-400/50 rounded-full flex items-center">
                                                 <div className="w-2/3 h-0.5 bg-white rounded-full"></div>
                                                 <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -757,15 +830,15 @@ export const LandingPage: React.FC = () => {
 
                         <ul className="space-y-5 text-left">
                             <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Visão Clara dos Gastos:</span> Veja exatamente para onde vai seu dinheiro com gráficos de pizza interativos e fáceis de entender.</span>
                             </li>
                              <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Evolução do Saldo:</span> Acompanhe o fluxo do seu dinheiro dia a dia e identifique tendências de gastos e economias.</span>
                             </li>
                              <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Relatórios Completos:</span> Filtre suas transações por data ou categoria para uma análise detalhada e tome o controle total.</span>
                             </li>
                         </ul>
@@ -873,8 +946,7 @@ export const LandingPage: React.FC = () => {
                        </ul>
                         <a
                             href="https://payfast.greenn.com.br/140026"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={handleOpenPreCheckout}
                             className="block w-full py-3 px-5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out"
                         >
                             Assinar Agora
