@@ -68,6 +68,11 @@ export const LandingPageNoNav: React.FC = () => {
   const [gifsLoaded, setGifsLoaded] = useState<Set<number>>(new Set());
   const [shouldLoadGifs, setShouldLoadGifs] = useState(false);
   const featureSectionRef = React.useRef<HTMLElement>(null);
+  const [showPreCheckout, setShowPreCheckout] = useState(false);
+  const [preName, setPreName] = useState("");
+  const [preEmail, setPreEmail] = useState("");
+  const [prePhone, setPrePhone] = useState("");
+  const [submittingPre, setSubmittingPre] = useState(false);
 
   // Carregar GIFs APENAS quando o usuário rolar até a seção de funcionalidades
   useEffect(() => {
@@ -102,6 +107,91 @@ export const LandingPageNoNav: React.FC = () => {
     }
   }, [activeFeatureIndex, shouldLoadGifs, gifsLoaded]);
 
+  // Trackers: load only on this page and clean up on unmount
+  useEffect(() => {
+    // Microsoft Clarity
+    const ensureClarity = () => {
+      if ((window as any).clarity) return;
+      (function(c: any, l: Document, a: any, r: any, i: string, t?: HTMLScriptElement, y?: Element) {
+        c[a] = c[a] || function() { (c[a].q = c[a].q || []).push(arguments); };
+        t = l.createElement(r) as HTMLScriptElement; t.async = true; t.src = "https://www.clarity.ms/tag/" + i;
+        y = l.getElementsByTagName(r)[0]; (y!.parentNode as Node).insertBefore(t, y!);
+      })(window as any, document, "clarity", "script", "tvtr3pe7ua");
+    };
+    // Meta/Facebook Pixel (2 IDs)
+    const ensureFacebookPixel = () => {
+      if ((window as any).fbq) {
+        try {
+          (window as any).fbq('init', '1513614419906000');
+          (window as any).fbq('init', '1621531598314509');
+          (window as any).fbq('track', 'PageView');
+        } catch {}
+        return;
+      }
+      (function(f: any, b: Document, e: string, v: string, n?: any, t?: HTMLScriptElement, s?: Element){
+        if (f.fbq) return; n = f.fbq = function(){ n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+        if (!f._fbq) f._fbq = n; n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
+        t = b.createElement(e) as HTMLScriptElement; t.async = true; t.src = v; s = b.getElementsByTagName(e)[0]; (s!.parentNode as Node).insertBefore(t, s!);
+      })((window as any), document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+      try {
+        (window as any).fbq('init', '1513614419906000');
+        (window as any).fbq('init', '1621531598314509');
+        (window as any).fbq('track', 'PageView');
+      } catch {}
+    };
+
+    // TikTok Pixel
+    const ensureTikTok = () => {
+      if ((window as any).ttq) {
+        try { (window as any).ttq.page(); } catch {}
+        return;
+      }
+      (function (w: any, d: Document, t: string) {
+        w.TiktokAnalyticsObject = t;
+        const ttq = w[t] = w[t] || [];
+        ttq.methods = ["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+        ttq.setAndDefer = function(obj: any, method: string) { obj[method] = function() { obj.push([method].concat(Array.prototype.slice.call(arguments, 0))); }; };
+        for (let i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
+        ttq.instance = function(id: string) { const e = ttq._i[id] || []; for (let n = 0; n < ttq.methods.length; n++) ttq.setAndDefer(e, ttq.methods[n]); return e; };
+        ttq.load = function(id: string, opts?: any) {
+          const r = "https://analytics.tiktok.com/i18n/pixel/events.js";
+          ttq._i = ttq._i || {}; ttq._i[id] = []; ttq._i[id]._u = r;
+          ttq._t = ttq._t || {}; ttq._t[id] = +new Date;
+          ttq._o = ttq._o || {}; ttq._o[id] = opts || {};
+          const n = d.createElement("script"); n.type = "text/javascript"; n.async = true; n.src = r + "?sdkid=" + id + "&lib=" + t;
+          const s = d.getElementsByTagName("script")[0]; (s!.parentNode as Node).insertBefore(n, s!);
+        };
+      })((window as any), document, 'ttq');
+      try {
+        (window as any).ttq.load('D401QTJC77UACP40867G');
+        (window as any).ttq.page();
+      } catch {}
+    };
+
+    // Defer until after load to avoid blocking
+    const onLoad = () => {
+      ensureClarity();
+      ensureFacebookPixel();
+      ensureTikTok();
+    };
+    if (document.readyState === 'complete') onLoad();
+    else window.addEventListener('load', onLoad);
+
+    // Cleanup: remove scripts and globals to avoid cross-page leakage
+    return () => {
+      window.removeEventListener('load', onLoad);
+      const removeBySrcPart = (part: string) => {
+        document.querySelectorAll(`script[src*="${part}"]`).forEach((el) => el.parentNode?.removeChild(el));
+      };
+      removeBySrcPart('clarity.ms/tag/tvtr3pe7ua');
+      removeBySrcPart('connect.facebook.net/en_US/fbevents.js');
+      removeBySrcPart('analytics.tiktok.com/i18n/pixel/events.js');
+      try { delete (window as any).clarity; } catch {}
+      try { delete (window as any).fbq; delete (window as any)._fbq; } catch {}
+      try { delete (window as any).ttq; } catch {}
+    };
+  }, []);
+
   const handleNextFeature = () => {
     setActiveFeatureIndex((prevIndex) => (prevIndex + 1) % features.length);
   };
@@ -125,12 +215,78 @@ export const LandingPageNoNav: React.FC = () => {
     }
   };
 
+  const checkoutUrl = "https://payfast.greenn.com.br/140026";
+  const handleOpenPreCheckout = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setShowPreCheckout(true);
+  };
+  const submitPreCheckout = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const normalizePhone = (v: string) => v.replace(/\D+/g, '');
+    const params = new URLSearchParams({
+      'name-field': preName || '',
+      'email-field': preEmail || '',
+      'cellphone-field': normalizePhone(prePhone || ''),
+    });
+    const dest = `${checkoutUrl}?${params.toString()}`;
+    if (!preEmail || !prePhone) {
+      window.location.href = dest;
+      return;
+    }
+    setSubmittingPre(true);
+    try {
+      await fetch('/api/checkout-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: preEmail, name: preName, phone: prePhone, source: 'landing-trafego', plan: 'plano-completo' })
+      });
+    } catch (err) {
+      // no-op
+    } finally {
+      window.location.href = dest;
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200 transition-colors duration-300">
       {/* SEM HEADER/NAVBAR - Começa direto no conteúdo */}
       
       <main className="relative z-0">
+        {showPreCheckout && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowPreCheckout(false)}></div>
+            <div className="relative w-full max-w-md mx-auto bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
+              <h3 className="text-xl font-bold text-white mb-1 text-center">Comece sua inscrição aqui</h3>
+              <p className="text-sm text-gray-400 mb-6 text-center">Preencha seus dados para avançar para o checkout.</p>
+              <form onSubmit={submitPreCheckout} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">Nome</label>
+                  <input value={preName} onChange={(e) => setPreName(e.target.value)}
+                         type="text" className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Seu nome" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">E-mail</label>
+                  <input value={preEmail} onChange={(e) => setPreEmail(e.target.value)}
+                         type="email" required className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="voce@email.com" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">WhatsApp</label>
+                  <input value={prePhone} onChange={(e) => setPrePhone(e.target.value)}
+                         type="tel" required className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="(11) 99999-9999" />
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <button type="button" onClick={() => setShowPreCheckout(false)}
+                          className="flex-1 py-2.5 rounded-lg border border-gray-600 text-gray-200 hover:bg-gray-700 transition-colors">Cancelar</button>
+                  <button type="submit" disabled={submittingPre}
+                          className="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-60">
+                    {submittingPre ? 'Enviando...' : 'Continuar para o checkout'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         <section id="inicio" className="pt-20 pb-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -233,9 +389,9 @@ export const LandingPageNoNav: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-gray-800/80 p-1.5 flex items-center gap-1.5 flex-shrink-0">
-                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                 <div className="flex-grow h-6 bg-gray-700 rounded-full text-xs text-gray-500 px-2 flex items-center">Digite...</div>
-                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                             </div>
                         </div>
                     </div>
@@ -261,7 +417,7 @@ export const LandingPageNoNav: React.FC = () => {
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 bg-gray-800 rounded-full p-2">
-                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg text-gray-200">Personalizado</h3>
@@ -556,7 +712,7 @@ export const LandingPageNoNav: React.FC = () => {
                             Entenda suas finanças com um olhar. <span className="text-green-500">Gráficos que falam por você.</span>
                         </h2>
                         <p className="text-lg text-gray-400 mb-8">
-                            Esqueça planilhas e apps confusos. Os dados que você registra de forma prática no WhatsApp se transformam em gráficos e relatórios visuais em nossos paineis. Acompanhe a evolução do seu saldo, identifique suas maiores fontes de despesa e tome decisões mais inteligentes com uma visão clara e completa das suas finanças.
+                            Esqueça planilhas e apps confusos. Os dados que você registra de forma prática no WhatsApp se transformam em gráficos e relatórios visuais em nossos paineis. Acompanhe a evolução do seu saldo, identifique suas maiores fontes de despesa e tome as melhores decisões para suas finanças.
 
                         </p>
                         
@@ -615,15 +771,15 @@ export const LandingPageNoNav: React.FC = () => {
 
                         <ul className="space-y-5 text-left">
                             <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Visão Clara dos Gastos:</span> Veja exatamente para onde vai seu dinheiro com gráficos de pizza interativos e fáceis de entender.</span>
                             </li>
                              <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Evolução do Saldo:</span> Acompanhe o fluxo do seu dinheiro dia a dia e identifique tendências de gastos e economias.</span>
                             </li>
                              <li className="flex items-center gap-3">
-                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                 <span className="text-gray-300"><span className="font-semibold text-white">Relatórios Completos:</span> Filtre suas transações por data ou categoria para uma análise detalhada e tome o controle total.</span>
                             </li>
                         </ul>
@@ -731,8 +887,7 @@ export const LandingPageNoNav: React.FC = () => {
                        </ul>
                         <a
                             href="https://payfast.greenn.com.br/140026"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={handleOpenPreCheckout}
                             className="block w-full py-3 px-5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out"
                         >
                             Assinar Agora
