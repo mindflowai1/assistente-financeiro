@@ -48,6 +48,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+
   const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email) {
@@ -153,6 +154,7 @@ export const LoginPage: React.FC = () => {
             {loading ? 'Entrando...' : forgotPasswordLoading ? 'Enviando email...' : (isForgotPassword ? 'Enviar Email de Recuperação' : 'Entrar')}
           </button>
         </form>
+        
         <div className="mt-4 text-center">
           {!isForgotPassword ? (
             <button

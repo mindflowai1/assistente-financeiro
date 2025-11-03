@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     // USAR APENAS onAuthStateChange - sem buscar sessão inicial
     // Deixar o Supabase gerenciar tudo automaticamente
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 [AuthContext] Evento:', event, '| Sessão:', !!session);
       
       setSession(session);

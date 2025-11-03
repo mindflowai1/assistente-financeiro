@@ -46,6 +46,7 @@ export const AppLayout: React.FC = () => {
     '/account': 'Minha Conta',
     '/subscription': 'Minha Assinatura',
     '/limits': 'Meus Limites',
+    '/reminders': 'Meus Lembretes',
   };
 
   const currentPageTitle = pageTitles[location.pathname] || 'Página';
@@ -130,6 +131,7 @@ export const AppLayout: React.FC = () => {
                 <Link to="/account" className={desktopMenuItemClass('/account')}>Minha Conta</Link>
                 <Link to="/subscription" className={desktopMenuItemClass('/subscription')}>Assinatura</Link>
                 <Link to="/limits" className={desktopMenuItemClass('/limits')}>Limites</Link>
+                <Link to="/reminders" className={desktopMenuItemClass('/reminders')}>Lembretes</Link>
               </nav>
               
               <div className="hidden md:block">
@@ -199,6 +201,15 @@ export const AppLayout: React.FC = () => {
                         role="menuitem"
                       >
                         Limites
+                      </Link>
+                      <Link 
+                        to="/reminders" 
+                        onClick={handleCloseMenu} 
+                        className={`${menuItemClass('/reminders')} animate-menu-item menu-item-hover`}
+                        style={{ animationDelay: '0.4s' }}
+                        role="menuitem"
+                      >
+                        Lembretes
                       </Link>
                     </nav>
                     

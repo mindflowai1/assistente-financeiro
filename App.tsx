@@ -14,6 +14,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then(module => 
 const AccountPage = lazy(() => import('./pages/AccountPage').then(module => ({ default: module.AccountPage })));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage').then(module => ({ default: module.SubscriptionPage })));
 const LimitsPage = lazy(() => import('./pages/LimitsPage').then(module => ({ default: module.LimitsPage })));
+const RemindersPage = lazy(() => import('./pages/RemindersPage').then(module => ({ default: module.RemindersPage })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(module => ({ default: module.ResetPasswordPage })));
 
 // Loading component otimizado
@@ -52,6 +53,7 @@ const AppRoutes: React.FC = () => {
             <Route path="/account" element={<AccountPage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/limits" element={<LimitsPage />} />
+            <Route path="/reminders" element={<RemindersPage />} />
           </Route>
           {/* A página de redefinição de senha fica fora do layout principal */}
           <Route path="/reset-password" element={<ResetPasswordPage />} />
