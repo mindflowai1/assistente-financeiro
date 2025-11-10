@@ -116,7 +116,7 @@ export const AppLayout: React.FC = () => {
             <div className="flex items-center gap-4">
                <Link to="/dashboard">
                  <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20fav%20ico.png?alt=media"
+                  src="/images/logo assistente fav icon.png"
                   alt="Logo"
                   className="h-10 w-10"
                  />
