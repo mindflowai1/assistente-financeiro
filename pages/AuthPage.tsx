@@ -90,9 +90,11 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-gray-100 p-4">
       <Link to="/" className="mb-8">
         <img 
-          src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/seu%20assistente%20financeiro%20sem%20fundo.png?alt=media&token=01d3c41a-a247-43fb-8823-452e9161a37d" 
+          src="/images/logo-assistente-reduzida.png" 
           alt="Seu Assistente Financeiro" 
-          className="h-40 w-auto" 
+          className="h-40 w-auto object-contain" 
+          loading="eager"
+          fetchPriority="high"
         />
       </Link>
 

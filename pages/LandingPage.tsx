@@ -196,14 +196,12 @@ export const LandingPage: React.FC = () => {
             <div className="flex-shrink-0">
               <Link to="/">
                 <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/seu%20assistente%20financeiro%20sem%20fundo.png?alt=media&token=01d3c41a-a247-43fb-8823-452e9161a37d" 
+                  src="/images/logo-assistente-reduzida.png" 
                   alt="Seu Assistente Financeiro" 
-                  className="h-36 md:h-40 w-auto"
+                  className="h-36 md:h-40 w-auto object-contain"
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  width="200"
-                  height="200"
                 />
               </Link>
             </div>
@@ -240,11 +238,11 @@ export const LandingPage: React.FC = () => {
                 <span className="sr-only">Abrir menu principal</span>
                 {isMenuOpen ? (
                   <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
                 ) : (
                   <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
                   </svg>
                 )}
               </button>
@@ -461,9 +459,13 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-gray-800/80 p-1.5 flex items-center gap-1.5 flex-shrink-0">
-                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
-                                <div className="flex-grow h-6 bg-gray-700 rounded-full text-xs text-gray-500 px-2 flex items-center">Digite...</div>
-                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17l-5 5-5-5"></path>
+                                </svg>
+                                <div className="flex-grow h-0.5 bg-gray-700 rounded-full text-xs text-gray-500 px-2 flex items-center">Digite...</div>
+                                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                                </svg>
                             </div>
                         </div>
                     </div>
@@ -480,7 +482,7 @@ export const LandingPage: React.FC = () => {
                 <div className="mt-12 space-y-6 text-left">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 bg-gray-800 rounded-full p-2">
-                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg text-gray-200">Praticidade Total</h3>
@@ -597,7 +599,7 @@ export const LandingPage: React.FC = () => {
                         </div>
                         {/* Chat Footer */}
                         <div className="bg-gray-800/80 p-2 flex items-center gap-2 flex-shrink-0">
-                            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17l-5 5-5-5"></path></svg>
                             <div className="flex-grow h-8 bg-gray-700 rounded-full text-sm text-gray-500 px-3 flex items-center">Digite...</div>
                             <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                         </div>
@@ -659,7 +661,7 @@ export const LandingPage: React.FC = () => {
                             aria-label="Anterior"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"></path>
                             </svg>
                         </button>
                         <button 
@@ -668,7 +670,7 @@ export const LandingPage: React.FC = () => {
                             aria-label="Próximo"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </button>
                     </div>
@@ -1034,10 +1036,11 @@ export const LandingPage: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400 max-w-7xl">
             <Link to="/" className="inline-block">
                 <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/seu%20assistente%20financeiro%20sem%20fundo.png?alt=media&token=01d3c41a-a247-43fb-8823-452e9161a37d" 
+                  src="/images/logo-assistente-reduzida.png" 
                   alt="Seu Assistente Financeiro" 
-                  className="h-40 w-auto mx-auto"
-                  loading="lazy"
+                  className="h-40 w-auto object-contain mx-auto"
+                  loading="eager"
+                  fetchPriority="high"
                 />
             </Link>
             <p className="mt-2 text-sm max-w-md mx-auto">

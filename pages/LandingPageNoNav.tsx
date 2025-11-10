@@ -898,10 +898,13 @@ export const LandingPageNoNav: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400 max-w-7xl">
             <Link to="/" className="inline-block">
                 <img 
-                  src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/seu%20assistente%20financeiro%20sem%20fundo.png?alt=media&token=01d3c41a-a247-43fb-8823-452e9161a37d" 
+                  src="/images/logo-assistente-reduzida.png" 
                   alt="Seu Assistente Financeiro" 
-                  className="h-40 w-auto mx-auto"
-                  loading="lazy"
+                  className="w-[160px] h-[64px] object-contain mx-auto"
+                  loading="eager"
+                  fetchPriority="high"
+                  width="200"
+                  height="80"
                 />
             </Link>
             <p className="mt-2 text-sm max-w-md mx-auto">
