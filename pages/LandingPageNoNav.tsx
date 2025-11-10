@@ -37,7 +37,7 @@ const features = [
     title: 'Áudio Inteligente',
     description: 'Na correria? Mande um áudio. Nossa IA transcreve, identifica o gasto, o valor e registra tudo para você.',
     exampleText: 'Diga "paguei 50 reais no almoço" e veja a mágica acontecer. Praticidade que fala, né?',
-    mockupImage: 'https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/audio-giff.gif?alt=media&token=003f829b-41a7-43fb-b7ff-c82da27f733f',
+    mockupImage: '/images/audio-giff.gif',
   },
   {
     icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>,
@@ -51,14 +51,14 @@ const features = [
     title: 'Consulta em Tempo Real',
     description: 'Pergunte sobre seus gastos a qualquer momento e receba respostas instantâneas no seu WhatsApp.',
     exampleText: 'Na dúvida se pode gastar? Pergunte "Qual meu saldo?" e tenha a resposta na hora.',
-    mockupImage: 'https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/limites-giff.gif?alt=media&token=77ab47d4-d5e4-4dbb-9444-d034bf800394',
+    mockupImage: '/images/limites-giff.gif',
   },
   {
     icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>,
     title: 'Registro Instantâneo',
     description: 'Seus gastos aparecem no painel no momento em que você envia a mensagem.',
     exampleText: 'Enviou, registrou. Sem atrasos, sem esperas. Suas finanças atualizadas em tempo real, prontas para consultar.',
-    mockupImage: 'https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/dashboard-giff.gif?alt=media&token=f6ababde-6d1a-48b1-b41e-26e99d9de9d5',
+    mockupImage: '/images/dashboard-giff.gif',
   }
 ];
 
@@ -252,7 +252,7 @@ export const LandingPageNoNav: React.FC = () => {
                         <div className="w-full h-full overflow-hidden rounded-[2rem] bg-gray-900 flex flex-col pt-6">
                             <div className="bg-gray-800/80 backdrop-blur-sm p-1.5 flex items-center gap-2 flex-shrink-0">
                             <img 
-                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media&token=af5e05b2-25c9-4641-87b9-fc8961a6a251" 
+                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media" 
                                 alt="Foto de perfil do assistente"
                                 className="w-7 h-7 rounded-full flex-shrink-0 object-cover"
                                 loading="eager"
@@ -386,7 +386,7 @@ export const LandingPageNoNav: React.FC = () => {
                         {/* Chat Header */}
                         <div className="bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-3 flex-shrink-0">
                             <img 
-                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media&token=af5e05b2-25c9-4641-87b9-fc8961a6a251" 
+                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media" 
                                 alt="Foto de perfil do assistente"
                                 className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                                 loading="eager"

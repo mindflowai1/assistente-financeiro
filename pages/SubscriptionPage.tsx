@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { supabase } from '../services/supabase';
 
-type SubscriptionStatus = 'Ativa' | 'Inativa' | 'Pendente';
+type SubscriptionStatus = 'Ativa' | 'Inativa' | 'Pendente' | 'Trial';
 
 const statusConfig: { [key in SubscriptionStatus]: { color: string; message: string } } = {
   Ativa: {
@@ -16,6 +17,10 @@ const statusConfig: { [key in SubscriptionStatus]: { color: string; message: str
   Pendente: {
     color: 'text-yellow-500',
     message: 'Sua assinatura está com o pagamento pendente. Aguarde a confirmação ou entre em contato com o suporte se houver algum problema.',
+  },
+  Trial: {
+    color: 'text-blue-500',
+    message: 'Você está no período de teste! Aproveite todos os recursos premium durante o período de trial.',
   },
 };
 
@@ -68,7 +73,7 @@ export const SubscriptionPage: React.FC = () => {
         }
       }
     } catch (e) {
-      console.warn('Erro ao ler dados do localStorage:', e);
+      // Erro ao ler dados do localStorage - silencioso
     }
     
     // Prioridade 2: Dados do usuário logado (se não houver dados salvos ou como fallback)
@@ -87,6 +92,27 @@ export const SubscriptionPage: React.FC = () => {
     const queryString = params.toString();
     return queryString ? `${baseUrl}?${queryString}` : baseUrl;
   }, [user]);
+
+  // Função para buscar data de expiração diretamente do banco
+  const fetchExpirationDateFromDatabase = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Busca a data de expiração do perfil (campo correto: subscription_expires_at)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_expires_at')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (!profileError && profileData && profileData.subscription_expires_at) {
+        setSubscriptionPeriod(profileData.subscription_expires_at);
+        return;
+      }
+    } catch (err) {
+      // Erro ao buscar data do banco - silencioso
+    }
+  };
 
   const handleFetchStatus = async () => {
     setLoadingStatus(true);
@@ -113,17 +139,35 @@ export const SubscriptionPage: React.FC = () => {
         const subscriptionData = data[0];
         const apiStatus = subscriptionData.subscription_status;
         
-        // Store the subscription_period date if it exists
-        if (subscriptionData.subscription_period) {
+        // Store the subscription expiration date if it exists (prioridade: subscription_expires_at)
+        if (subscriptionData.subscription_expires_at) {
+            setSubscriptionPeriod(subscriptionData.subscription_expires_at);
+        } else if (subscriptionData.subscription_period) {
             setSubscriptionPeriod(subscriptionData.subscription_period);
+        } else if (subscriptionData.expires_at) {
+            setSubscriptionPeriod(subscriptionData.expires_at);
+        } else if (subscriptionData.end_date) {
+            setSubscriptionPeriod(subscriptionData.end_date);
+        } else if (subscriptionData.trial_ends_at) {
+            setSubscriptionPeriod(subscriptionData.trial_ends_at);
+        } else if (subscriptionData.next_payment) {
+            setSubscriptionPeriod(subscriptionData.next_payment);
+        } else {
+          // Se não veio do webhook, tenta buscar diretamente do banco
+          await fetchExpirationDateFromDatabase();
         }
 
         switch (apiStatus) {
             case 'paid':
+            case 'active':
                 setStatus('Ativa');
                 break;
             case 'pending':
                 setStatus('Pendente');
+                break;
+            case 'trial':
+            case 'trialing':
+                setStatus('Trial');
                 break;
             default:
                 setStatus('Inativa');
@@ -131,7 +175,6 @@ export const SubscriptionPage: React.FC = () => {
         }
       } else {
         setStatus('Inativa');
-        console.warn("Formato de resposta inesperado do webhook de status:", data);
       }
     } catch (e: any) {
       setError(e.message || 'Ocorreu um erro ao verificar o status.');
@@ -185,16 +228,20 @@ export const SubscriptionPage: React.FC = () => {
                 </p>
               </div>
               
-              {/* Display validity date only if status is 'Ativa' and date is available */}
-              {status === 'Ativa' && subscriptionPeriod && (
+              {/* Display validity/expiration date if available */}
+              {subscriptionPeriod && (
                 <div className={`mt-4 p-3 rounded-lg inline-block ${validityInfoClass}`}>
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Sua assinatura é válida até: <span className={`font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(subscriptionPeriod)}</span>
+                        {status === 'Ativa' && 'Sua assinatura é válida até: '}
+                        {status === 'Trial' && 'Período de trial expira em: '}
+                        {status === 'Pendente' && 'Data prevista de ativação: '}
+                        {status === 'Inativa' && 'Última data de expiração: '}
+                        <span className={`font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(subscriptionPeriod)}</span>
                     </p>
                 </div>
               )}
 
-              {['Inativa', 'Pendente'].includes(status) && (
+              {['Inativa', 'Pendente', 'Trial'].includes(status) && (
                 <div className="pt-4">
                   <a 
                     href={checkoutUrl} 
