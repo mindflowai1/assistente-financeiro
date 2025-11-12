@@ -252,7 +252,7 @@ export const LandingPageNoNav: React.FC = () => {
                         <div className="w-full h-full overflow-hidden rounded-[2rem] bg-gray-900 flex flex-col pt-6">
                             <div className="bg-gray-800/80 backdrop-blur-sm p-1.5 flex items-center gap-2 flex-shrink-0">
                             <img 
-                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media" 
+                                src="/images/logo assistente wpp.png" 
                                 alt="Foto de perfil do assistente"
                                 className="w-7 h-7 rounded-full flex-shrink-0 object-cover"
                                 loading="eager"
@@ -386,7 +386,7 @@ export const LandingPageNoNav: React.FC = () => {
                         {/* Chat Header */}
                         <div className="bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-3 flex-shrink-0">
                             <img 
-                                src="https://firebasestorage.googleapis.com/v0/b/online-media-2df7b.firebasestorage.app/o/logo%20assistente%20wpp.png?alt=media" 
+                                src="/images/logo assistente wpp.png" 
                                 alt="Foto de perfil do assistente"
                                 className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                                 loading="eager"
