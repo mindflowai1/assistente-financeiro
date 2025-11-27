@@ -3,24 +3,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../services/supabase';
 
-type SubscriptionStatus = 'Ativa' | 'Inativa' | 'Pendente' | 'Trial';
+type SubscriptionStatus = 'Ativa' | 'Inativa' | 'Pendente';
+type PlanType = 'Plano Individual' | 'Plano Dupla';
 
-const statusConfig: { [key in SubscriptionStatus]: { color: string; message: string } } = {
+const statusConfig: { [key in SubscriptionStatus]: { color: string; bgColor: string; message: string } } = {
   Ativa: {
     color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
     message: 'Obrigado por ser um assinante! Você tem acesso a todos os recursos premium.',
   },
   Inativa: {
     color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
     message: 'Sua assinatura não está ativa. Assine agora para ter acesso a todos os recursos exclusivos e potenciar sua gestão financeira.',
   },
   Pendente: {
-    color: 'text-yellow-500',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
     message: 'Sua assinatura está com o pagamento pendente. Aguarde a confirmação ou entre em contato com o suporte se houver algum problema.',
-  },
-  Trial: {
-    color: 'text-blue-500',
-    message: 'Você está no período de teste! Aproveite todos os recursos premium durante o período de trial.',
   },
 };
 
@@ -51,8 +51,9 @@ export const SubscriptionPage: React.FC = () => {
   const { theme } = useTheme();
   
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-  const [subscriptionPeriod, setSubscriptionPeriod] = useState<string | null>(null); // State for the subscription period date
-  const [loadingStatus, setLoadingStatus] = useState(true); // Start loading immediately
+  const [subscriptionPeriod, setSubscriptionPeriod] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<PlanType>('Plano Individual');
+  const [loadingStatus, setLoadingStatus] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const checkoutUrl = useMemo(() => {
@@ -93,24 +94,47 @@ export const SubscriptionPage: React.FC = () => {
     return queryString ? `${baseUrl}?${queryString}` : baseUrl;
   }, [user]);
 
-  // Função para buscar data de expiração diretamente do banco
-  const fetchExpirationDateFromDatabase = async () => {
+  // Função para buscar dados da assinatura diretamente do Supabase
+  const fetchSubscriptionDataFromDatabase = async () => {
     if (!user?.id) return;
     
     try {
-      // Busca a data de expiração do perfil (campo correto: subscription_expires_at)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('subscription_expires_at')
+        .select('subscription_status, subscription_expires_at, plan')
         .eq('id', user.id)
         .maybeSingle();
       
-      if (!profileError && profileData && profileData.subscription_expires_at) {
-        setSubscriptionPeriod(profileData.subscription_expires_at);
+      if (profileError) {
+        console.error('Erro ao buscar dados do perfil:', profileError);
         return;
       }
+
+      if (profileData) {
+        // Mapear status do banco para o status da UI
+        const dbStatus = profileData.subscription_status;
+        if (dbStatus === 'paid') {
+          setStatus('Ativa');
+        } else if (dbStatus === 'pending') {
+          setStatus('Pendente');
+        } else {
+          setStatus('Inativa');
+        }
+
+        // Definir data de expiração
+        if (profileData.subscription_expires_at) {
+          setSubscriptionPeriod(profileData.subscription_expires_at);
+        }
+
+        // Definir tipo de plano
+        if (profileData.plan === 'family') {
+          setPlanType('Plano Dupla');
+        } else {
+          setPlanType('Plano Individual');
+        }
+      }
     } catch (err) {
-      // Erro ao buscar data do banco - silencioso
+      console.error('Erro ao buscar dados da assinatura:', err);
     }
   };
 
@@ -118,7 +142,8 @@ export const SubscriptionPage: React.FC = () => {
     setLoadingStatus(true);
     setError(null);
     setStatus(null);
-    setSubscriptionPeriod(null); // Reset subscription period on each fetch
+    setSubscriptionPeriod(null);
+    setPlanType('Plano Individual');
 
     if (!user?.id) {
       setError("Não foi possível obter a identificação do usuário. Tente fazer login novamente.");
@@ -126,56 +151,9 @@ export const SubscriptionPage: React.FC = () => {
       return;
     }
 
-    const webhookUrl = `https://n8n-n8n-start.kof6cn.easypanel.host/webhook/025e3469-c4cc-4963-ae2f-4fb16ac999e8?user_id=${user.id}`;
-    
     try {
-      const response = await fetch(webhookUrl);
-      if (!response.ok) {
-        throw new Error('Falha ao buscar o status da assinatura.');
-      }
-      const data = await response.json();
-
-      if (Array.isArray(data) && data.length > 0) {
-        const subscriptionData = data[0];
-        const apiStatus = subscriptionData.subscription_status;
-        
-        // Store the subscription expiration date if it exists (prioridade: subscription_expires_at)
-        if (subscriptionData.subscription_expires_at) {
-            setSubscriptionPeriod(subscriptionData.subscription_expires_at);
-        } else if (subscriptionData.subscription_period) {
-            setSubscriptionPeriod(subscriptionData.subscription_period);
-        } else if (subscriptionData.expires_at) {
-            setSubscriptionPeriod(subscriptionData.expires_at);
-        } else if (subscriptionData.end_date) {
-            setSubscriptionPeriod(subscriptionData.end_date);
-        } else if (subscriptionData.trial_ends_at) {
-            setSubscriptionPeriod(subscriptionData.trial_ends_at);
-        } else if (subscriptionData.next_payment) {
-            setSubscriptionPeriod(subscriptionData.next_payment);
-        } else {
-          // Se não veio do webhook, tenta buscar diretamente do banco
-          await fetchExpirationDateFromDatabase();
-        }
-
-        switch (apiStatus) {
-            case 'paid':
-            case 'active':
-                setStatus('Ativa');
-                break;
-            case 'pending':
-                setStatus('Pendente');
-                break;
-            case 'trial':
-            case 'trialing':
-                setStatus('Trial');
-                break;
-            default:
-                setStatus('Inativa');
-                break;
-        }
-      } else {
-        setStatus('Inativa');
-      }
+      // Buscar dados diretamente do Supabase
+      await fetchSubscriptionDataFromDatabase();
     } catch (e: any) {
       setError(e.message || 'Ocorreu um erro ao verificar o status.');
       setStatus('Inativa');
@@ -228,28 +206,40 @@ export const SubscriptionPage: React.FC = () => {
                 </p>
               </div>
               
-              {/* Display validity/expiration date if available */}
-              {subscriptionPeriod && (
-                <div className={`mt-4 p-3 rounded-lg inline-block ${validityInfoClass}`}>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {status === 'Ativa' && 'Sua assinatura é válida até: '}
-                        {status === 'Trial' && 'Período de trial expira em: '}
-                        {status === 'Pendente' && 'Data prevista de ativação: '}
-                        {status === 'Inativa' && 'Última data de expiração: '}
-                        <span className={`font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(subscriptionPeriod)}</span>
-                    </p>
+              {/* Display plan type and validity */}
+              <div className="mt-6 space-y-3">
+                <div className={`p-4 rounded-lg ${validityInfoClass}`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Tipo de Plano
+                  </p>
+                  <p className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                    {planType}
+                  </p>
                 </div>
-              )}
+                
+                {subscriptionPeriod && (
+                  <div className={`p-4 rounded-lg ${validityInfoClass}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {status === 'Ativa' && 'Validade da Assinatura'}
+                      {status === 'Pendente' && 'Data Prevista de Ativação'}
+                      {status === 'Inativa' && 'Última Data de Expiração'}
+                    </p>
+                    <p className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                      {formatDate(subscriptionPeriod)}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-              {['Inativa', 'Pendente', 'Trial'].includes(status) && (
-                <div className="pt-4">
+              {['Inativa', 'Pendente'].includes(status) && (
+                <div className="pt-6">
                   <a 
                     href={checkoutUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="inline-block py-3 px-8 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out text-lg"
+                    className="inline-block py-3 px-8 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-all duration-300 ease-in-out text-lg shadow-lg hover:shadow-xl"
                   >
-                    Assinar Agora
+                    {status === 'Pendente' ? 'Verificar Pagamento' : 'Assinar Agora'}
                   </a>
                 </div>
               )}
