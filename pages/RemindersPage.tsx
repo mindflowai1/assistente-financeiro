@@ -9,7 +9,7 @@ interface Reminder {
   dia_vencimento: number;
   status: string;
   tipo: string;
-  valor: number | null;
+  valor: number | string | null;
   created_at: string;
 }
 
@@ -125,6 +125,20 @@ export const RemindersPage: React.FC = () => {
     return icons[tipo as keyof typeof icons] || '📝';
   };
 
+  const formatValor = (valor: number | string | null): { formatted: string; isValid: boolean } => {
+    if (valor == null || valor === '') {
+      return { formatted: 'Valor não informado', isValid: false };
+    }
+    
+    const numValue = typeof valor === 'string' ? parseFloat(valor) : valor;
+    
+    if (isNaN(numValue)) {
+      return { formatted: 'Valor não informado', isValid: false };
+    }
+    
+    return { formatted: `R$ ${numValue.toFixed(2)}`, isValid: true };
+  };
+
   return (
     <div className={`w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 rounded-2xl shadow-lg border transition-colors duration-300 ${cardClass}`}>
       <div className="space-y-6">
@@ -205,10 +219,8 @@ export const RemindersPage: React.FC = () => {
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className={`text-sm font-semibold ${reminder.valor != null && typeof reminder.valor === 'number' ? 'text-green-600' : textMutedClass}`}>
-                          {reminder.valor != null && typeof reminder.valor === 'number' 
-                            ? `R$ ${Number(reminder.valor).toFixed(2)}` 
-                            : 'Valor não informado'}
+                        <span className={`text-sm font-semibold ${formatValor(reminder.valor).isValid ? 'text-green-600' : textMutedClass}`}>
+                          {formatValor(reminder.valor).formatted}
                         </span>
                       </div>
                     </div>
