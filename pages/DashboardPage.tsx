@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface TransactionRecord {
   id: string;
@@ -407,6 +409,55 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text('Relatório de Transações', 14, 22);
+
+    doc.setFontSize(11);
+    doc.text(`Período: ${startDate ? formatDate(startDate) : 'Início'} a ${endDate ? formatDate(endDate) : 'Fim'}`, 14, 30);
+    const now = new Date();
+    doc.text(`Gerado em: ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR')}`, 14, 36);
+
+    if (selectedCategory) {
+      doc.text(`Categoria: ${selectedCategory}`, 14, 42);
+    }
+
+    doc.setFontSize(14);
+    doc.text('Resumo Financeiro', 14, 55);
+    doc.setFontSize(10);
+    doc.text(`Total Entradas: ${formatCurrency(totalIncome)}`, 14, 62);
+    doc.text(`Total Saídas: ${formatCurrency(totalOutcome)}`, 14, 68);
+
+    // Set color for balance (Green or Red)
+    if (balance >= 0) {
+      doc.setTextColor(22, 163, 74); // green-600
+    } else {
+      doc.setTextColor(239, 68, 68); // red-500
+    }
+    doc.text(`Saldo: ${formatCurrency(balance)}`, 14, 74);
+    doc.setTextColor(0, 0, 0); // Reset to black
+
+    const tableColumn = ["Data", "Descrição", "Categoria", "Tipo", "Valor"];
+    const tableRows = filteredRecords.map(record => [
+      formatDate(record.data),
+      record.descricao,
+      record.categoria,
+      record.tipo,
+      formatCurrency(record.valor)
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 85,
+      headStyles: { fillColor: [22, 163, 74] },
+    });
+
+    doc.save(`relatorio_transacoes_${startDate || 'inicio'}_${endDate || 'fim'}.pdf`);
+  };
+
   const handleGetRecords = async () => {
     setLoading(true);
     setMessage(null);
@@ -634,17 +685,30 @@ export const DashboardPage: React.FC = () => {
               <div className={`p-6 rounded-lg shadow ${transactionCardClass}`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Registros de Transações</h2>
-                  {!isSelectionMode ? (
-                    <button onClick={() => setIsSelectionMode(true)} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition-all duration-300">Excluir Transações</button>
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <button onClick={handleDeleteSelected} disabled={selectedRecords.length === 0 || isDeleting} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition-all duration-300 disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center">
-                        {isDeleting && <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                        {isDeleting ? 'Excluindo...' : `Excluir Selecionadas (${selectedRecords.length})`}
-                      </button>
-                      <button onClick={() => { setIsSelectionMode(false); setSelectedRecords([]); }} className="py-2 px-4 bg-gray-500 hover:bg-gray-600 rounded-lg font-semibold text-white transition-all duration-300">Cancelar</button>
-                    </div>
-                  )}
+                  <div className="flex gap-2 items-center">
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={filteredRecords.length === 0}
+                      className="py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-all duration-300 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      title="Exportar para PDF"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="hidden sm:inline">Exportar PDF</span>
+                    </button>
+                    {!isSelectionMode ? (
+                      <button onClick={() => setIsSelectionMode(true)} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition-all duration-300">Excluir Transações</button>
+                    ) : (
+                      <div className="flex items-center gap-4">
+                        <button onClick={handleDeleteSelected} disabled={selectedRecords.length === 0 || isDeleting} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition-all duration-300 disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center">
+                          {isDeleting && <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+                          {isDeleting ? 'Excluindo...' : `Excluir Selecionadas (${selectedRecords.length})`}
+                        </button>
+                        <button onClick={() => { setIsSelectionMode(false); setSelectedRecords([]); }} className="py-2 px-4 bg-gray-500 hover:bg-gray-600 rounded-lg font-semibold text-white transition-all duration-300">Cancelar</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                   <div>
